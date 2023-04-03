@@ -1,4 +1,5 @@
 import 'package:another_flushbar/flushbar_helper.dart';
+import 'package:cron/cron.dart';
 import 'package:dev_task/application/cubit/github_cubit.dart';
 import 'package:dev_task/constants/hive_keys.dart';
 import 'package:dev_task/data/github/git_hub_local_datasource.dart';
@@ -20,6 +21,12 @@ class HomeScreen extends StatelessWidget {
     late GithubCubit githubCubit;
     TextEditingController controller = TextEditingController();
     ScrollController scrollController = ScrollController();
+    final cron = Cron();
+
+    cron.schedule(Schedule.parse('*/1 * * * *'), () async {
+      githubCubit.updateCache();
+    });
+
     scrollController.addListener(() {
       if (scrollController.position.maxScrollExtent ==
           scrollController.position.pixels) {
@@ -39,8 +46,14 @@ class HomeScreen extends StatelessWidget {
         body: BlocListener<GithubCubit, GithubState>(
           listener: (context, state) {
             bool isFailure = state is GithubGetAllReposFailure;
+            bool cacheUpdated = state is GithubCacheUpdated;
             if (isFailure) {
               FlushbarHelper.createError(message: state.failure.message)
+                  .show(context);
+            } else if (cacheUpdated) {
+              FlushbarHelper.createSuccess(
+                      message:
+                          'Added ${state.numberOfUnCachedRepos} More Repos')
                   .show(context);
             }
           },

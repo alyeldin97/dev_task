@@ -9,6 +9,7 @@ import '../utils/failure.dart';
 abstract class GithubRepo {
   Future<Either<Failure, List<GitHubRepoModel>>> getAllPublicRepos(page,
       {bool clearCache = false});
+  Future<int> updateCache();
 }
 
 class GithubRepoImpl implements GithubRepo {
@@ -25,7 +26,7 @@ class GithubRepoImpl implements GithubRepo {
       {bool clearCache = false}) async {
     try {
       clearCache ? gitHubLocalDataSource.clearCache() : null;
-      repos = await fillReposFromCache();
+      //repos = await fillReposFromCache();
       repos = await gitHubRemoteDataSource.getAllPublicRepos(page);
       await gitHubLocalDataSource.cacheRepos(repos);
       repos.forEach((repo) {
@@ -40,14 +41,34 @@ class GithubRepoImpl implements GithubRepo {
     }
   }
 
-  Future<List<GitHubRepoModel>> fillReposFromCache() async {
-    if (repos.isEmpty) {
-      List<GitHubRepoModel> cachedRepos =
-          await gitHubLocalDataSource.getCachedRepos();
+  // Future<List<GitHubRepoModel>> fillReposFromCache() async {
+  //   if (repos.isEmpty) {
+  //     List<GitHubRepoModel> cachedRepos =
+  //         await gitHubLocalDataSource.getCachedRepos();
 
-      return cachedRepos;
-    } else {
-      return repos;
-    }
+  //     return cachedRepos;
+  //   } else {
+  //     return repos;
+  //   }
+  // }
+
+  Future<int> updateCache() async {
+    List<GitHubRepoModel> cachedRepos =
+        await gitHubLocalDataSource.getCachedRepos();
+
+    List<GitHubRepoModel> reposFromAPI =
+        await gitHubRemoteDataSource.getAllPublicRepos(1);
+
+    int numberOfNewUnCachedRepos = 0;
+
+    bool isRepoCachedBefore = false;
+    reposFromAPI.forEach((repo) {
+      isRepoCachedBefore = cachedRepos.contains(repo);
+      if (!isRepoCachedBefore) {
+        numberOfNewUnCachedRepos++;
+      }
+    });
+    getAllPublicRepos(1);
+    return numberOfNewUnCachedRepos;
   }
 }

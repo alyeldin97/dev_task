@@ -34,3 +34,9 @@ class GithubGetAllReposFailure extends GithubState {
     required super.repos,
   });
 }
+
+class GithubCacheUpdated extends GithubState {
+  int numberOfUnCachedRepos;
+  GithubCacheUpdated(
+      {required super.repos, required this.numberOfUnCachedRepos});
+}

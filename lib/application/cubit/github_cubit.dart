@@ -46,4 +46,12 @@ class GithubCubit extends Cubit<GithubState> {
     repos = [];
     currentPage = 1;
   }
+
+  updateCache() async {
+    int numberOfUnCachedRepos = await githubRepo.updateCache();
+    if (numberOfUnCachedRepos > 0) {
+      emit(GithubCacheUpdated(
+          repos: repos, numberOfUnCachedRepos: numberOfUnCachedRepos));
+    }
+  }
 }

@@ -62,6 +62,7 @@ class GithubRepoImpl implements GithubRepo {
     int numberOfNewUnCachedRepos = 0;
 
     bool isRepoCachedBefore = false;
+
     reposFromAPI.forEach((repo) {
       isRepoCachedBefore = cachedRepos.contains(repo);
       if (!isRepoCachedBefore) {

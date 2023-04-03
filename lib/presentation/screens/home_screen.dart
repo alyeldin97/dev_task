@@ -20,6 +20,10 @@ class _HomeScreenState extends State<HomeScreen> {
   TextEditingController controller = TextEditingController();
   ScrollController scrollController = ScrollController();
   final cron = Cron();
+  late GitHubRepoModel repo;
+  late bool isLoading;
+  late bool isSuccess;
+  late bool hasReachedLastItem;
 
   @override
   void initState() {
@@ -54,9 +58,9 @@ class _HomeScreenState extends State<HomeScreen> {
               BlocBuilder<GithubCubit, GithubState>(builder: (context, state) {
             githubCubit = BlocProvider.of<GithubCubit>(context);
 
-            bool isSuccess = state is GithubGetAllReposSuccess ||
+            isSuccess = state is GithubGetAllReposSuccess ||
                 state is GithubSearchvalueChanged;
-            bool isLoading = state is GithubGetAllReposLoading;
+            isLoading = state is GithubGetAllReposLoading;
 
             return isLoading
                 ? Center(child: CircularProgressIndicator())
@@ -84,10 +88,12 @@ class _HomeScreenState extends State<HomeScreen> {
                             controller: scrollController,
                             itemCount: state.repos.length,
                             itemBuilder: (context, index) {
-                              GitHubRepoModel repo = state.repos[index];
+                              repo = state.repos[index];
+                              hasReachedLastItem =
+                                  index == state.repos.length - 1 &&
+                                      controller.text == '';
 
-                              if (index == state.repos.length - 1 &&
-                                  controller.text == '') {
+                              if (hasReachedLastItem) {
                                 return Center(
                                   child: CircularProgressIndicator(),
                                 );

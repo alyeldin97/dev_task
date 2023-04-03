@@ -1,44 +1,37 @@
 import 'package:another_flushbar/flushbar_helper.dart';
 import 'package:cron/cron.dart';
 import 'package:dev_task/application/cubit/github_cubit.dart';
-import 'package:dev_task/constants/hive_keys.dart';
-import 'package:dev_task/data/github/git_hub_local_datasource.dart';
-import 'package:dev_task/data/github/git_hub_remote_datasource_impl.dart';
 import 'package:dev_task/data/github/git_hub_repo_model.dart';
-import 'package:dev_task/repo/github.dart';
-import 'package:dev_task/utils/hive_helper.dart';
-import 'package:dev_task/utils/network_service.dart';
+import 'package:dev_task/utils/injection_container.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../widgets/dialog.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
   @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  late GithubCubit githubCubit;
+  TextEditingController controller = TextEditingController();
+  ScrollController scrollController = ScrollController();
+  final cron = Cron();
+
+  @override
+  void initState() {
+    updateCacheInBackGround();
+    loadMoreReposOnScroll();
+    super.initState();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    late GithubCubit githubCubit;
-    TextEditingController controller = TextEditingController();
-    ScrollController scrollController = ScrollController();
-    final cron = Cron();
-
-    cron.schedule(Schedule.parse('*/1 * * * *'), () async {
-      githubCubit.updateCache();
-    });
-
-    scrollController.addListener(() {
-      if (scrollController.position.maxScrollExtent ==
-          scrollController.position.pixels) {
-        githubCubit.nextPage();
-        githubCubit.getAllRepos();
-      }
-    });
     return BlocProvider(
-      create: (context) => GithubCubit(GithubRepoImpl(
-          GitHubRemoteDataSourceImpl(HttpNetworkServiceImpl()),
-          GitHubLocalDataSourceImpl(HiveHelper(HiveKeys.githubRepo))))
-        ..getAllRepos(),
+      create: (context) => sl<GithubCubit>()..getAllRepos(),
       child: Scaffold(
         appBar: AppBar(
           title: Text('Repos'),
@@ -93,7 +86,8 @@ class HomeScreen extends StatelessWidget {
                             itemBuilder: (context, index) {
                               GitHubRepoModel repo = state.repos[index];
 
-                              if (index == state.repos.length - 1) {
+                              if (index == state.repos.length - 1 &&
+                                  controller.text == '') {
                                 return Center(
                                   child: CircularProgressIndicator(),
                                 );
@@ -135,5 +129,29 @@ class HomeScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  updateCacheInBackGround() {
+    cron.schedule(Schedule.parse('*/1 * * * *'), () async {
+      githubCubit.updateCache();
+    });
+  }
+
+  loadMoreReposOnScroll() {
+    scrollController.addListener(() {
+      if (scrollController.position.maxScrollExtent ==
+          scrollController.position.pixels) {
+        githubCubit.nextPage();
+        githubCubit.getAllRepos();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    controller.dispose();
+    scrollController.dispose();
+    cron.close();
+    super.dispose();
   }
 }

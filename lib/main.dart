@@ -7,13 +7,14 @@ import 'package:dev_task/inits.dart';
 import 'package:dev_task/presentation/screens/home_screen.dart';
 import 'package:dev_task/utils/bloc_observer.dart';
 import 'package:dev_task/utils/hive_helper.dart';
+import 'package:dev_task/utils/injection_container.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 void main() async {
   Bloc.observer = MyBlocObserver();
   await initHive();
-
+  await initGetIt();
   runApp(const MyApp());
 }
 

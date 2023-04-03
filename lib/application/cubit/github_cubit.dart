@@ -14,16 +14,16 @@ class GithubCubit extends Cubit<GithubState> {
   List<GitHubRepoModel> repos = [];
   GithubCubit(this.githubRepo) : super(GithubInitial(repos: []));
 
-  getAllRepos() async {
-    emit(GithubGetAllReposLoading(repos: repos));
+  getAllRepos({bool clearCache = false}) async {
+    repos.isEmpty ? emit(GithubGetAllReposLoading(repos: repos)) : null;
     Either<Failure, List<GitHubRepoModel>> successOrFailure =
-        await githubRepo.getAllPublicRepos(currentPage);
+        await githubRepo.getAllPublicRepos(currentPage, clearCache: clearCache);
 
     successOrFailure.fold((failure) {
       emit(GithubGetAllReposFailure(failure: failure, repos: repos));
     }, (repos) {
-      this.repos = repos;
-      emit(GithubGetAllReposSuccess(repos: repos));
+      this.repos.addAll(repos);
+      emit(GithubGetAllReposSuccess(repos: this.repos));
     });
   }
 
@@ -36,5 +36,14 @@ class GithubCubit extends Cubit<GithubState> {
 
   resetSearchValue() {
     searchValue = '';
+  }
+
+  nextPage() {
+    currentPage++;
+  }
+
+  clearCache() {
+    repos = [];
+    currentPage = 1;
   }
 }

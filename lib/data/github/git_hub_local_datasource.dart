@@ -4,8 +4,9 @@ import 'package:dev_task/utils/failure.dart';
 import 'package:dev_task/utils/hive_helper.dart';
 
 abstract class GitHubLocalDataSource {
-  void cacheRepos(List<GitHubRepoModel> repos);
+  Future cacheRepos(List<GitHubRepoModel> repos);
   Future<List<GitHubRepoModel>> getCachedRepos();
+  void clearCache();
 }
 
 class GitHubLocalDataSourceImpl implements GitHubLocalDataSource {
@@ -15,7 +16,7 @@ class GitHubLocalDataSourceImpl implements GitHubLocalDataSource {
   );
 
   @override
-  void cacheRepos(List<GitHubRepoModel> repos) async {
+  Future cacheRepos(List<GitHubRepoModel> repos) async {
     try {
       repos.forEach((repo) async {
         await hiveHelper.add(
@@ -31,10 +32,19 @@ class GitHubLocalDataSourceImpl implements GitHubLocalDataSource {
   @override
   Future<List<GitHubRepoModel>> getCachedRepos() async {
     try {
-      dynamic repos = await hiveHelper.getAll();
+      List repos = await hiveHelper.getAll();
       return repos.map((repoJson) {
         return GitHubRepoModel.fromJson(repoJson);
       }).toList();
+    } catch (e) {
+      throw AppFailures.defaultFailure;
+    }
+  }
+
+  @override
+  void clearCache() async {
+    try {
+      await hiveHelper.deleteAll();
     } catch (e) {
       throw AppFailures.defaultFailure;
     }

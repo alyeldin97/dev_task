@@ -24,7 +24,7 @@ class GitHubRepoModel extends Equatable {
     required this.ownerUrl,
   });
 
-  static GitHubRepoModel fromJson(Map<String, dynamic> json) {
+  static GitHubRepoModel fromJson(Map<dynamic, dynamic> json) {
     int? id = json[Jsonkey.id] as int?;
     String? name = json[Jsonkey.name] as String?;
     String? description = json[Jsonkey.description] as String?;
